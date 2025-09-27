@@ -1,0 +1,941 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>ข้อสอบสอบวิชา 30104 - 2002 วงจรไฟฟ้า — Quiz with Admin</title>
+<style>
+  :root{--bg:#f6f7fb;--card:#fff;--accent:#276ef1;--muted:#666;}
+  html,body{height:100%;margin:0;font-family:"Noto Sans Thai","Sarabun",Arial,sans-serif;background:var(--bg);color:#222}
+  .wrap{max-width:920px;margin:28px auto;padding:20px}
+  .card{background:var(--card);border-radius:12px;box-shadow:0 8px 28px rgba(20,30,60,0.08);padding:20px}
+  h1{margin:0 0 10px;font-size:20px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  input[type=text],select,textarea{width:100%;padding:8px;border-radius:8px;border:1px solid #ddd;font-size:15px}
+  .row{display:flex;gap:12px}
+  .col{flex:1}
+  .center{text-align:center}
+  .timer{font-weight:700;color:#fff;background:var(--accent);padding:8px 12px;border-radius:10px}
+  .controls{display:flex;gap:10px;align-items:center;margin-top:12px}
+  button{background:var(--accent);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer}
+  button[disabled]{opacity:.45;cursor:not-allowed}
+  .question-number{font-size:13px;color:var(--muted)}
+  .options{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .option{padding:10px;border-radius:8px;border:1px solid #eee;cursor:pointer;background:#d8f3dc;transition: background 0.3s ease;}
+  .option input{margin-right:10px}
+  .nav{display:flex;justify-content:space-between;margin-top:18px}
+  .summary{margin-top:12px}
+  .hidden{display:none}
+  .small{font-size:13px;color:var(--muted)}
+  .admin{margin-top:18px;border-top:1px dashed #eee;padding-top:14px}
+  pre{background:#fafafa;padding:12px;border-radius:8px;overflow:auto}
+  .img-preview{max-width:300px;border-radius:8px}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+  footer.small{margin-top:18px;color:var(--muted);text-align:center}
+
+#qText{background:#d8f3dc;padding:8px;border-radius:8px;}
+.option.selected{background:#95d5b2 !important;}
+.option.incorrect{background:#f8d7da !important;}
+.option:hover{background:#b7e4c7;}
+</style>
+</head>
+<body>
+
+<h2>วันที่สอบและเวลาปัจจุบัน</h2>
+<p id="currentDateTime"></p>
+    <script>
+        const now = new Date();
+        document.getElementById('currentDateTime').textContent = 
+            'เมื่อสอบเสร็จพิมพ์ผลสอบเป็น .PDF ไฟล์ ส่งไฟล์ทางLINE ID :4520261225 ให้อาจารย์ประจำรายวิชา วันที่สอบและเวลาส่งคะแนน ' + now.toLocaleString('th-TH');
+</script>
+
+<div class="wrap card" id="app">
+  <div class="topbar">
+    <div style="text-align:center;">      
+      <img src="logoLTC.png" alt="วิทยาลัย" width="86" height="80">
+      <h2>วิทยาลัยเทคโนโลยีแหลมทอง</h2>      
+      <h1> ข้อสอบปลายภาคเรียน&emsp;  ภาคเรียนที่  1&emsp;  ปีการศึกษา  2568 </h1>
+      <h1> วิชา วงจรไฟฟ้า&emsp;   รหัสวิชา      30105-2002&emsp; ชั้น  ปวส. 1 ไฟฟ้า </h1>      
+      <h1> อาจารย์ผู้ออกข้อสอบ&emsp;  อ.ธีระ  กลมเกลา</h1>
+      <div class="miduim">เวลาสอบ 60 นาที — แสดงคำถามทีละข้อ — จำนวน 50 ข้อ   คะแนนเต็ม (50 คะแนน)</div>
+    </div>
+    <div><div class="timer" id="timer">60:00</div></div>
+  </div>
+
+  <!-- Start / Registration -->
+  <div id="register" class="card" >
+    <div style="display:grid;gap:20px">
+      <label>รหัสนักศึกษา หรือ รหัสประชาชน (ถ้ามี)</label>
+      <input type="text" id="stuId" placeholder="เช่น 123456">
+      <div class="row">
+        <div class="col">
+          <label>ชื่อ - สกุล *</label>
+          <input type="text" id="fullname" placeholder="เช่น สมชาย ใจดี">
+        </div>
+        <div class="col">
+          <label>สาขา *</label>
+          <input type="text" id="major" placeholder="เช่น ช่างอิเล็กทรอนิกส์">
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <label class="small" style="margin:0">จำนวนข้อสอบ:</label>
+        <div id="totalCount" class="small">--</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button id="startBtn">เริ่มทำข้อสอบ</button>
+        <!-- ปุ่ม Admin Login -->
+        <button id="adminLoginBtn" style="background:#e67e22">Admin Login</button>
+      </div>
+      <div class="miduim">ผู้สอบต้องตอบทุกข้อจึงจะส่งได้</div>
+    </div>
+  </div>
+
+  <!-- Quiz Area -->
+  <div id="quizArea" class="hidden">
+    <div class="question-header">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <h1 class="question-number" id="qNumber">ข้อที่ 1 / 50</h1>
+          <h2 id="qText" style="margin:6px 0">คำถาม...</h2>
+        </div>
+        <div style="text-align:right">
+          <div class="small">ผู้เข้าสอบ</div>
+          <div id="infoName" style="font-weight:700"></div>
+          <div class="small" id="infoMajor"></div>
+        </div>
+      </div>
+    </div>
+    <div id="qImageArea" style="margin-top:10px"></div>
+    <div class="options" id="optionsArea"></div>
+    <div class="nav">
+      <div>
+        <button id="prevBtn">ก่อนหน้า</button>
+        <button id="nextBtn">ถัดไป</button>
+      </div>
+      <div>
+        <button id="finishBtn" disabled>ส่งข้อสอบ</button>
+      </div>
+    </div>
+    <div class="miduim" style="margin-top:8px">เวลาที่เหลือ: <span id="timeLeft" style="font-weight:700"></span></div>
+  </div>
+
+  <!-- Result -->
+  <div id="resultArea" class="hidden card">
+    <h2>ผลการสอบ</h2>
+    <div id="resultSummary"></div>
+    <div style="margin-top:12px">
+      <button id="printBtn">พิมพ์เป็น PDF</button>
+      <button id="restartBtn" style="background:#777">เริ่มใหม่</button>
+    </div>
+  </div>
+
+  <!-- Admin / Editor -->
+  <div id="editorArea" class="hidden card admin">
+    <h3>Editor — แก้ไขแบบทดสอบ (สำหรับผู้ดูแล)</h3>
+    <div class="small">ใส่/แก้ไขคำถาม ตัวเลือก คำตอบที่ถูกต้อง และเพิ่มรูปภาพได้</div>
+    <div style="margin-top:10px">
+      <label>JSON ข้อสอบ</label>
+      <textarea id="questionJson" style="height:220px;font-family:monospace;"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button id="saveQuestionsBtn" style="background:#2a9d8f">บันทึก</button>
+        <button id="addQBtn" style="background:#4a90e2">เพิ่มข้อ</button>
+        <button id="exportBtn" style="background:#444">ดาวน์โหลด JSON</button>
+        <button id="importBtn" style="background:#666">อัปโหลด JSON</button>
+        <input id="fileIn" type="file" accept="application/json" class="hidden">
+      </div>
+      <div style="margin-top:10px">
+        <label>เพิ่มรูปให้ข้อแรก (ตัวอย่าง)</label>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <input type="file" id="imgFile" accept="image/*">
+          <button id="attachImgBtn">เพิ่มรูปให้ข้อแรก</button>
+        </div>
+        <div id="imgPreviewWrap" style="margin-top:8px"></div>
+      </div>
+      <!-- ปุ่มกลับ -->
+      <button id="backToStartBtn" style="background:#777;margin-top:12px">กลับหน้าเริ่มต้น</button>
+    </div>
+  </div>
+
+  <footer class="small">ไฟล์ HTML พร้อมโหมด Admin — ผู้พัฒนาติดต่อ klomklaotkk911@gmail.com</footer>
+</div>
+
+<script>
+/* === ตั้งค่ารหัสผ่าน Admin === */
+const ADMIN_PASS = "quiz1234";
+/* === JSON ฐานข้อมูลข้อสอบ === */
+const DEFAULT_QUESTIONS = [
+{
+    "id": 1,
+    "text": "วงจรไฟฟ้ากระแสตรงหมายถึงวงจรที่ใช้แหล่งจ่ายชนิดใด *",
+    "options": [
+      "ไฟฟ้ากระแสสลับ",
+      "ไฟฟ้ากระแสตรง",
+      "ไฟฟ้าแรงสูง",
+      "ไฟฟ้าสถิต"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 2,
+    "text": "ถ้ามีแรงดัน 9V ต่อกับตัวต้านทาน 3Ω กระแสที่ได้คือเท่าไร *",
+    "options": [
+      "1 A",
+      "2 A",
+      "3 A",
+      "4 A"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 3,
+    "text": "ในการต่อวงจรไฟฟ้าแบบอนุกรม กระแสไฟฟ้าที่ไหลในแต่ละตัวต้านทานมีค่าเป็นอย่างไร *",
+    "options": [
+      "ไม่เท่ากัน",
+      "เท่ากัน",
+      "ขึ้นกับค่า R",
+      "เป็นศูนย์"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 4,
+    "text": "ในการต่อวงจรไฟฟ้าแบบขนาน แรงดันไฟฟ้าที่ตกคร่อมแต่ละตัวต้านทานจะเป็นอย่างไร *",
+    "options": [
+      "ไม่เท่ากัน",
+      "เท่ากัน",
+      "ขึ้นกับค่า R",
+      "เป็นศูนย์"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 5,
+    "text": "ตัวต้านทาน 5Ω, 10Ω และ 15Ω ต่ออนุกรมกัน ค่าเทียบเท่าของความต้านทานรวมคือเท่าไร *",
+    "options": [
+      "25Ω",
+      "30Ω",
+      "35Ω",
+      "40Ω"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 6,
+    "text": "ตัวต้านทาน 6Ω, 12Ω ต่อขนานกัน ความต้านทานรวมมีค่าเท่าไร *",
+    "options": [
+      "3Ω",
+      "4Ω",
+      "5Ω",
+      "6Ω"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 7,
+    "text": "ถ้าใช้แบตเตอรี่ 12V ต่อกับตัวต้านทานรวม 4Ω กระแสไฟฟ้าในวงจรคือเท่าไร *",
+    "options": [
+      "2 A",
+      "3 A",
+      "4 A",
+      "6 A"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 8,
+    "text": "พลังงานไฟฟ้าที่ใช้ไปในเวลาหนึ่งวัดด้วยหน่วยใด *",
+    "options": [
+      "วัตต์",
+      "โวลต์",
+      "วัตต์-ชั่วโมง",
+      "แอมแปร์"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 9,
+    "text": "กำลังไฟฟ้าในวงจร DC คำนวณได้จากสูตรใด *",
+    "options": [
+      "P = V/I",
+      "P = V × I",
+      "P = I/R",
+      "P = V² + I²"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 10,
+    "text": "แบตเตอรี่ 12V ต่อโหลด 6Ω จะใช้กำลังไฟฟ้ากี่วัตต์ *",
+    "options": [
+      "12 W",
+      "18 W",
+      "24 W",
+      "36 W"
+    ],
+    "correct": 4,
+    "img": ""
+  },
+  {
+    "id": 11,
+    "text": "กฎของโอห์มกล่าวความสัมพันธ์ระหว่างอะไร *",
+    "options": [
+      "V, I, R",
+      "P, V, I",
+      "R, P, Q",
+      "V, Q, t"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 12,
+    "text": "ถ้า R = 4Ω, I = 2A แรงดันไฟฟ้า V มีค่าเท่าไร *",
+    "options": [
+      "4 V",
+      "6 V",
+      "8 V",
+      "10 V"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 13,
+    "text": "ถ้า V = 24V และ R = 8Ω กระแส I เท่ากับเท่าไร *",
+    "options": [
+      "2 A",
+      "3 A",
+      "4 A",
+      "5 A"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 14,
+    "text": "กระแส 5A ไหลผ่านตัวต้านทาน 10Ω แรงดันไฟฟ้าจะเท่าไร *",
+    "options": [
+      "20 V",
+      "30 V",
+      "40 V",
+      "50 V"
+    ],
+    "correct": 4,
+    "img": ""
+  },
+  {
+    "id": 15,
+    "text": "แรงดัน 10V ไหลผ่านตัวต้านทาน 2Ω กระแสคือเท่าไร *",
+    "options": [
+      "2 A",
+      "4 A",
+      "5 A",
+      "10 A"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 16,
+    "text": "ถ้า V = 120V, I = 10A ความต้านทาน R มีค่าเท่าไร *",
+    "options": [
+      "8Ω",
+      "10Ω",
+      "12Ω",
+      "15Ω"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 17,
+    "text": "ความต้านทานไฟฟ้ามีหน่วยวัดเป็นอะไร *",
+    "options": [
+      "โวลต์",
+      "วัตต์",
+      "โอห์ม",
+      "แอมแปร์"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 18,
+    "text": "สัญลักษณ์ของกฎโอห์มคืออะไร *",
+    "options": [
+      "P = VI",
+      "V = IR",
+      "I = VR",
+      "R = PI"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 19,
+    "text": "กฎของเคอร์ชอฟด้านกระแส (KCL) กล่าวไว้อย่างไร *",
+    "options": [
+      "ผลรวมกระแสเข้าจุดร่วมเท่ากับผลรวมกระแสออก",
+      "ผลรวมแรงดันเท่ากับศูนย์",
+      "ผลรวมกำลังเท่ากับศูนย์",
+      "ผลรวมพลังงานเท่ากับศูนย์"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 20,
+    "text": "กฎของเคอร์ชอฟด้านแรงดัน (KVL) กล่าวไว้อย่างไร *",
+    "options": [
+      "ผลรวมแรงดันรอบวงจรปิดเท่ากับศูนย์",
+      "ผลรวมกระแสเท่ากับศูนย์",
+      "ผลรวมพลังงานเท่ากับศูนย์",
+      "ผลรวมกำลังเท่ากับศูนย์"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 21,
+    "text": "กระแสที่ไหลเข้าจุดต่อร่วมเท่ากับอะไร *",
+    "options": [
+      "ศูนย์",
+      "ผลรวมกระแสออก",
+      "แรงดันรวม",
+      "ผลรวมกำลัง"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 22,
+    "text": "ผลรวมแรงดันรอบวงจรปิดมีค่าเท่าไร *",
+    "options": [
+      "ศูนย์",
+      "ไม่ทราบ",
+      "เท่ากับแรงดันแหล่งจ่าย",
+      "อนันต์"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 23,
+    "text": "ถ้ามีกระแส 2A, 3A ไหลเข้าจุดร่วม และมีกระแสออก 4A กระแสออกอีกแขนงต้องเท่าไร *",
+    "options": [
+      "1 A",
+      "2 A",
+      "3 A",
+      "4 A"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 24,
+    "text": "วงจรปิดมีกำลังไฟฟ้าเข้า 20V และแรงดันตกคร่อมรวม 20V ข้อใดถูกต้องตามกฎของเคอร์ชอฟ *",
+    "options": [
+      "ไม่ถูกต้อง",
+      "ถูกต้อง",
+      "แรงดันไม่พอ",
+      "ต้องเพิ่ม R"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 25,
+    "text": "กฎของเคอร์ชอฟใช้สำหรับการวิเคราะห์วงจรประเภทใด *",
+    "options": [
+      "วงจรง่ายๆ",
+      "วงจรซับซ้อน",
+      "วงจรไฟแรงสูง",
+      "วงจรดิจิทัล"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 26,
+    "text": "ไฟฟ้ากระแสสลับ (AC) มีคุณสมบัติเด่นข้อใด *",
+    "options": [
+      "ทิศทางคงที่",
+      "ทิศทางสลับไปมา",
+      "ไม่เคลื่อนที่",
+      "แรงดันคงที่"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 27,
+    "text": "ความถี่ไฟฟ้ามาตรฐานในประเทศไทยคือกี่เฮิรตซ์ *",
+    "options": [
+      "50 Hz",
+      "60 Hz",
+      "100 Hz",
+      "120 Hz"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 28,
+    "text": "แรงดันไฟฟ้าในบ้านทั่วไปของไทยมีค่าเท่าไร *",
+    "options": [
+      "110 V",
+      "220 V",
+      "240 V",
+      "380 V"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 29,
+    "text": "ค่า Root Mean Square (RMS) ของแรงดัน AC หมายถึงอะไร *",
+    "options": [
+      "ค่าเฉลี่ย",
+      "ค่ากำลัง",
+      "ค่าที่เทียบเท่า DC",
+      "ค่าสูงสุด"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 30,
+    "text": "ถ้าแรงดันสูงสุดของ AC คือ 311V ค่า RMS คือเท่าไร *",
+    "options": [
+      "220 V",
+      "230 V",
+      "240 V",
+      "311 V"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 31,
+    "text": "ความสัมพันธ์ระหว่างค่า RMS และค่า Peak ของ AC คืออะไร *",
+    "options": [
+      "Vrms = Vp × √2",
+      "Vrms = Vp / √2",
+      "Vp = Vrms / √2",
+      "Vp = Vrms"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 32,
+    "text": "เพาเวอร์แฟกเตอร์ (Power Factor) คืออัตราส่วนของอะไร *",
+    "options": [
+      "กำลังจริงต่อกำลังปรากฏ",
+      "แรงดันต่อกระแส",
+      "กำลังสูญเสียต่อกำลังรวม",
+      "แรงดันต่อกำลัง"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 33,
+    "text": "เพาเวอร์แฟกเตอร์ของโหลดตัวต้านทานบริสุทธิ์มีค่าเท่าไร *",
+    "options": [
+      "0",
+      "0.5",
+      "1",
+      "∞"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 34,
+    "text": "จำนวนเชิงซ้อนในงานไฟฟ้าใช้แทนปริมาณใด *",
+    "options": [
+      "แรงดันและกระแส AC",
+      "กำลังไฟฟ้า",
+      "พลังงานไฟฟ้า",
+      "แรงต้านทาน"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 35,
+    "text": "j ในจำนวนเชิงซ้อนมีค่าเท่ากับอะไร *",
+    "options": [
+      "√(-1)",
+      "√(2)",
+      "√(3)",
+      "√(4)"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 36,
+    "text": "แรงดัน 10∠30° แทนในรูปเชิงซ้อนจะได้ค่าใด *",
+    "options": [
+      "8.66 + j5",
+      "10 + j30",
+      "5 + j10",
+      "15 + j20"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 37,
+    "text": "ถ้ามี Z = 3 + j4 ขนาดของอิมพีแดนซ์ |Z| เท่าไร *",
+    "options": [
+      "4",
+      "5",
+      "6",
+      "7"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 38,
+    "text": "มุมเฟสของ Z = 4 – j3 คือเท่าไร *",
+    "options": [
+      "-36.87°",
+      "36.87°",
+      "45°",
+      "60°"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 39,
+    "text": "วงจรที่มีแต่ตัวต้านทาน (R) กระแสและแรงดันจะสัมพันธ์กันอย่างไร *",
+    "options": [
+      "กระแสนำแรงดัน",
+      "แรงดันนำกระแส",
+      "อยู่ในเฟสเดียวกัน",
+      "ตรงข้ามเฟส"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 40,
+    "text": "วงจร R ใช้สูตรคำนวณกำลังไฟฟ้าอย่างไร *",
+    "options": [
+      "P = VI cosφ",
+      "P = VI sinφ",
+      "P = V/I",
+      "P = I/R"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 41,
+    "text": "เพาเวอร์แฟกเตอร์ของวงจร R เท่ากับเท่าไร *",
+    "options": [
+      "0",
+      "0.5",
+      "1",
+      "∞"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 42,
+    "text": "ถ้ามี R = 10Ω, V = 100V (AC) กำลังไฟฟ้าคือกี่วัตต์ *",
+    "options": [
+      "500 W",
+      "1000 W",
+      "1500 W",
+      "2000 W"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 43,
+    "text": "กระแสในวงจร C จะนำหน้าแรงดันกี่องศา *",
+    "options": [
+      "30°",
+      "45°",
+      "60°",
+      "90°"
+    ],
+    "correct": 4,
+    "img": ""
+  },
+  {
+    "id": 44,
+    "text": "อิมพีแดนซ์ของตัวเก็บประจุมีสูตรว่าอะไร *",
+    "options": [
+      "Zc = 1/jωC",
+      "Zc = jωC",
+      "Zc = R",
+      "Zc = 1/R"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 45,
+    "text": "ถ้า C = 100μF, f = 50Hz ค่า XC เท่ากับเท่าไร *",
+    "options": [
+      "31.8Ω",
+      "63.6Ω",
+      "159Ω",
+      "318Ω"
+    ],
+    "correct": 3,
+    "img": ""
+  },
+  {
+    "id": 46,
+    "text": "วงจร C บริสุทธิ์ เพาเวอร์แฟกเตอร์เท่ากับเท่าไร *",
+    "options": [
+      "0",
+      "0.5",
+      "1",
+      "∞"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 47,
+    "text": "กระแสในวงจร L จะล่าช้าแรงดันกี่องศา *",
+    "options": [
+      "30°",
+      "45°",
+      "60°",
+      "90°"
+    ],
+    "correct": 4,
+    "img": ""
+  },
+  {
+    "id": 48,
+    "text": "อิมพีแดนซ์ของตัวเหนี่ยวนำมีสูตรว่าอะไร *",
+    "options": [
+      "ZL = jωL",
+      "ZL = 1/jωL",
+      "ZL = R",
+      "ZL = 1/R"
+    ],
+    "correct": 1,
+    "img": ""
+  },
+  {
+    "id": 49,
+    "text": "ถ้า L = 0.1H, f = 50Hz ค่า XL เท่าไร *",
+    "options": [
+      "15.7Ω",
+      "31.4Ω",
+      "62.8Ω",
+      "157Ω"
+    ],
+    "correct": 2,
+    "img": ""
+  },
+  {
+    "id": 50,
+    "text": "วงจร L บริสุทธิ์ เพาเวอร์แฟกเตอร์เท่ากับเท่าไร *",
+    "options": [
+      "0",
+      "0.5",
+      "1",
+      "∞"
+    ],
+    "correct": 1,
+    "img": ""
+  }
+
+];
+
+/* ==== ฟังก์ชันและตัวแปรหลัก ==== */
+function loadQuestions(){
+  const raw=localStorage.getItem('quiz_questions');
+  if(raw){try{const q=JSON.parse(raw);if(Array.isArray(q)&&q.length>0)return q;}catch(e){}}
+  return DEFAULT_QUESTIONS;
+}
+function saveQuestionsToStorage(q){localStorage.setItem('quiz_questions',JSON.stringify(q));}
+
+let questions=loadQuestions();
+let currentIndex=0,timerSeconds=60*60,timerInterval=null,answers=[],meta={fullname:'',major:'',stuId:''};
+
+const totalCountDisplay=document.getElementById('totalCount');
+const startBtn=document.getElementById('startBtn');
+const adminLoginBtn=document.getElementById('adminLoginBtn');
+const registerDiv=document.getElementById('register');
+const quizArea=document.getElementById('quizArea');
+const qNumber=document.getElementById('qNumber');
+const qText=document.getElementById('qText');
+const optionsArea=document.getElementById('optionsArea');
+const prevBtn=document.getElementById('prevBtn');
+const nextBtn=document.getElementById('nextBtn');
+const finishBtn=document.getElementById('finishBtn');
+const timerEl=document.getElementById('timer');
+const timeLeftEl=document.getElementById('timeLeft');
+const infoName=document.getElementById('infoName');
+const infoMajor=document.getElementById('infoMajor');
+const resultArea=document.getElementById('resultArea');
+const resultSummary=document.getElementById('resultSummary');
+const printBtn=document.getElementById('printBtn');
+const restartBtn=document.getElementById('restartBtn');
+const fullnameInput=document.getElementById('fullname');
+const majorInput=document.getElementById('major');
+const stuIdInput=document.getElementById('stuId');
+const editorArea=document.getElementById('editorArea');
+const questionJsonTextarea=document.getElementById('questionJson');
+const saveQuestionsBtn=document.getElementById('saveQuestionsBtn');
+const addQBtn=document.getElementById('addQBtn');
+const exportBtn=document.getElementById('exportBtn');
+const importBtn=document.getElementById('importBtn');
+const fileIn=document.getElementById('fileIn');
+const imgFile=document.getElementById('imgFile');
+const attachImgBtn=document.getElementById('attachImgBtn');
+const imgPreviewWrap=document.getElementById('imgPreviewWrap');
+const backToStartBtn=document.getElementById('backToStartBtn');
+
+function fmtTime(s){const m=Math.floor(s/60),sec=s%60;return String(m).padStart(2,'0')+":"+String(sec).padStart(2,'0');}
+function refreshTotals(){totalCountDisplay.textContent=questions.length+" ข้อ";}
+refreshTotals();
+questionJsonTextarea.value=JSON.stringify(questions,null,2);
+
+/* ==== โหมดผู้สอบ ==== */
+startBtn.addEventListener('click',()=>{
+  const name=fullnameInput.value.trim(),major=majorInput.value.trim(),id=stuIdInput.value.trim();
+  if(!name||!major){alert('กรุณากรอก ชื่อ-สกุล และ สาขา');return;}
+  meta={fullname:name,major:major,stuId:id};
+  infoName.textContent=name; infoMajor.textContent=major;
+  registerDiv.classList.add('hidden'); quizArea.classList.remove('hidden');
+  answers=new Array(questions.length).fill(null); currentIndex=0;
+  renderQuestion();
+  timerSeconds=60*60; timerEl.textContent=fmtTime(timerSeconds); timeLeftEl.textContent=fmtTime(timerSeconds);
+  if(timerInterval)clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{
+    timerSeconds--; timerEl.textContent=fmtTime(timerSeconds); timeLeftEl.textContent=fmtTime(timerSeconds);
+    if(timerSeconds<=0){clearInterval(timerInterval);alert('หมดเวลา ส่งข้อสอบอัตโนมัติ');submitQuiz();}
+  },1000);
+});
+
+function renderQuestion(){
+  const q=questions[currentIndex];
+  qNumber.textContent=`ข้อที่ ${currentIndex+1} / ${questions.length}`;
+  qText.textContent=q.text;
+  const qImageArea=document.getElementById('qImageArea');
+  qImageArea.innerHTML=''; if(q.img){const img=document.createElement('img');img.src=q.img;img.className='img-preview';qImageArea.appendChild(img);}
+  optionsArea.innerHTML='';
+  q.options.forEach((opt,idx)=>{
+    const div=document.createElement('label');div.className='option';
+    const radio=document.createElement('input');radio.type='radio';radio.name='option';radio.value=idx;
+    if(answers[currentIndex]===idx)radio.checked=true;
+    radio.addEventListener('change',()=>{answers[currentIndex]=idx;updateNavButtons();});
+    div.appendChild(radio);div.appendChild(document.createTextNode(opt));optionsArea.appendChild(div);
+  });
+  updateNavButtons();
+}
+function updateNavButtons(){
+  prevBtn.disabled=currentIndex===0;
+  nextBtn.disabled=currentIndex===questions.length-1;
+  finishBtn.disabled=!(currentIndex===questions.length-1 && answers.every(a=>a!==null));
+}
+prevBtn.onclick=()=>{if(currentIndex>0){currentIndex--;renderQuestion();}};
+nextBtn.onclick=()=>{if(answers[currentIndex]===null){alert('เลือกคำตอบก่อน');return;} if(currentIndex<questions.length-1){currentIndex++;renderQuestion();}};
+finishBtn.onclick=()=>{if(currentIndex!==questions.length-1||!answers.every(a=>a!==null)){alert('ตอบทุกข้อก่อนส่ง');return;} if(confirm('ต้องการส่งข้อสอบ?'))submitQuiz();};
+
+function submitQuiz(){
+  if(timerInterval)clearInterval(timerInterval);
+  let correctCount=0;const details=[];
+  questions.forEach((q,i)=>{
+    const chosen=answers[i],ok=(chosen +1 ===q.correct);
+    if(ok)correctCount++;
+    details.push({i:i+1,text:q.text,chosenText:q.options[chosen],correctText:q.options[q.correct-1],ok});
+  });
+  quizArea.classList.add('hidden'); resultArea.classList.remove('hidden');
+  let html=`<p>ชื่อ: <b>${meta.fullname}</b> | สาขา: <b>${meta.major}</b> | รหัส: ${meta.stuId||'-'}</p>`;
+  html+=`<p>คะแนน: <b>${correctCount}</b> / ${questions.length}</p><ol>`;
+  details.forEach(d=>{html+=`<li>${d.text}<div class="small">ตอบ: ${d.chosenText||'-'} ${d.ok?'✅':'❌'} | ถูก: ${d.correctText}</div></li>`});
+  html+='</ol>'; resultSummary.innerHTML=html;
+}
+printBtn.onclick=()=>window.print();
+restartBtn.onclick=()=>{if(confirm('เริ่มใหม่?'))location.reload();};
+
+/* ==== โหมด Admin ==== */
+adminLoginBtn.addEventListener('click',()=>{
+  const pw=prompt("กรอกรหัสผ่านผู้ดูแล:");  
+  if(pw===ADMIN_PASS){
+    registerDiv.classList.add('hidden');
+    editorArea.classList.remove('hidden');
+    questionJsonTextarea.value=JSON.stringify(questions,null,2);
+    showImgPreview(questions[0] && questions[0].img);
+  }else if(pw!==null){alert("รหัสผ่านไม่ถูกต้อง");}
+});
+backToStartBtn.onclick=()=>{editorArea.classList.add('hidden');registerDiv.classList.remove('hidden');};
+
+/* ==== Editor Functions ==== */
+function showImgPreview(dataUrl){
+  imgPreviewWrap.innerHTML=''; if(!dataUrl)return;
+  const img=document.createElement('img');img.src=dataUrl;img.style.maxWidth='220px';img.style.borderRadius='8px';
+  imgPreviewWrap.appendChild(img);
+}
+saveQuestionsBtn.onclick=()=>{
+  try{
+    const parsed=JSON.parse(questionJsonTextarea.value);
+    if(!Array.isArray(parsed))throw 'ต้องเป็น array';
+    questions=parsed; saveQuestionsToStorage(questions);
+    refreshTotals(); alert('บันทึกสำเร็จ');
+  }catch(e){alert('JSON ไม่ถูกต้อง: '+e);}
+};
+addQBtn.onclick=()=>{
+  questions.push({id:questions.length+1,text:'คำถามใหม่',options:['ตัวเลือก A','ตัวเลือก B'],correct:0,img:''});
+  questionJsonTextarea.value=JSON.stringify(questions,null,2);
+  saveQuestionsToStorage(questions); refreshTotals();
+};
+exportBtn.onclick=()=>{
+  const blob=new Blob([JSON.stringify(questions,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob); const a=document.createElement('a');
+  a.href=url;a.download='quiz_questions.json';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+};
+importBtn.onclick=()=>fileIn.click();
+fileIn.onchange=(e)=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{
+    try{const p=JSON.parse(r.result);if(!Array.isArray(p))throw 'ไม่ใช่ array';
+      questions=p; questionJsonTextarea.value=JSON.stringify(questions,null,2);
+      saveQuestionsToStorage(questions); refreshTotals(); alert('นำเข้าเรียบร้อย');
+    }catch(err){alert('ผิดพลาด: '+err);}
+  }; r.readAsText(f);
+};
+attachImgBtn.onclick=()=>{
+  const f=imgFile.files[0]; if(!f)return alert('เลือกไฟล์รูปก่อน');
+  const r=new FileReader();
+  r.onload=()=>{ if(questions.length===0)return alert('ไม่มีข้อสอบ');
+    questions[0].img=r.result;
+    questionJsonTextarea.value=JSON.stringify(questions,null,2);
+    saveQuestionsToStorage(questions); showImgPreview(r.result);
+    alert('เพิ่มรูปให้ข้อแรกแล้ว');
+  }; r.readAsDataURL(f);
+};
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
+</script>
+</body>
+</html>
